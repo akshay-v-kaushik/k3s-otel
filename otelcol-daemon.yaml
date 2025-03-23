@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: otel-collector
+  namespace: monitoring
+  labels:
+    app: otel-collector
+spec:
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      hostNetwork: true
+      containers:
+        - name: otel-collector
+          image: akshayvkaushik24/otelcol:latest
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - "/otelcol --config /conf/collector-config.yaml >> /var/log/otelcol.log 2>&1"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /conf
+            - name: log-volume
+              mountPath: /var/log
+          resources:
+            limits:
+              cpu: "200m"
+              memory: "200Mi"
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+      volumes:
+        - name: config-volume
+          configMap:
+            name: otel-collector-config
+        - name: log-volume
+          emptyDir: {}

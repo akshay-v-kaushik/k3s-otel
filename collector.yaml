@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: monitoring
+data:
+  collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc: {}
+          http: {}
+
+      hostmetrics:
+        collection_interval: 10s
+        scrapers:
+          cpu: {}
+          memory: {}
+          disk: {}
+          filesystem: {}
+          load: {}
+
+    processors:
+      batch: {}
+      attributes:
+        actions:
+          - key: "environment"
+            action: insert
+            value: "dev"
+          - key: "region"
+            action: insert
+            value: "us-west"
+
+    exporters:
+      logging:
+        loglevel: debug
+      prometheus:
+        endpoint: "0.0.0.0:8899"
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch, attributes]
+          exporters: [logging]
+        metrics:
+          receivers: [otlp, hostmetrics]
+          processors: [batch, attributes]
+          exporters: [prometheus, logging]
